@@ -1,0 +1,2 @@
+batch_size,learning_rate,hidden_layers,dropout_rate
+8,0.001,"[32, 16]",0.0

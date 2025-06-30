@@ -1,0 +1,144 @@
+general:
+  optimizer: "cost" # "cost" or "co2" (or "peakshaving")
+  start: "2015-01-01 00:00:00"
+  end: "2015-12-31 23:45:00" # 23:45:00
+  year: "2015"
+  timebase: 15
+  time_freq: "15 min"
+  latitude: 50.941357
+  longitude: 6.958307
+  name: "VPP"
+  output_file: "./output/loadshape.csv"
+  pv_data_file: "./input/pv/dwd_pv_data_2015.csv"
+  slp_data_file: "./input/baseload/SLP_Amprion_15min_kW.csv"
+  baseload_file_vpplib: "./input/baseload/df_S_15min.csv"
+  mean_temp_days: "./input/thermal/dwd_temp_days_2015.csv"
+  mean_temp_hours: "./input/thermal/dwd_temp_hours_2015.csv"
+  mean_temp_15min: "./input/thermal/dwd_temp_15min_2015.csv"
+
+  t_0: 40
+
+actors:
+  # - name: central_boiler
+  #   thermal_peak_load: 10
+  #   heating: gas
+  #   #thermal_storage: true
+
+- name: central_pv
+  P_pv_nom: 15
+  E_bat_nom: 10
+  P_bat_nom: 7
+
+- name: house_1
+  SLP_type: H00
+  building_type: "DE_HEF34"       # Einfamilienhaus, Neubau gut gedämmt
+  yearly_electrical_energy_demand: 4500
+  yearly_thermal_energy_demand: 9000
+  heating: HP_Ground
+  P_hp_nom: 3.5
+  E_th_nom: 6
+  quarter_grid: central_pv
+
+- name: house_2
+  SLP_type: H00
+  building_type: "DE_HMF33"
+  yearly_electrical_energy_demand: 10000
+  yearly_thermal_energy_demand: 15000
+  heating: HP_Air
+  P_hp_nom: 6
+  E_th_nom: 8
+  thermal_storage: true
+  quarter_grid: central_pv
+
+- name: house_3
+  SLP_type: H00
+  building_type: "DE_HEF33"       # Gewerbekomplex mit Wohnanteil, Neubau
+  yearly_electrical_energy_demand: 5000
+  yearly_thermal_energy_demand: 12000
+  heating: HP_Air
+  P_hp_nom: 5
+  E_th_nom: 7
+  thermal_storage: true
+  quarter_grid: central_pv
+
+
+  # - name: house_4
+  #   SLP_type: H00
+  #   building_type: "DE_HEF34" # 'DE_HEF33', 'DE_HEF34', 'DE_HMF33', 'DE_HMF34', 'DE_GKO34'
+  #   yearly_electrical_energy_demand: 4000
+  #   yearly_thermal_energy_demand: 12000
+  #   thermal_peak_load: 6
+  #   heating: central_boiler
+  #   thermal_storage: false
+
+  # - name: house_5
+  #   SLP_type: H00
+  #   building_type: "DE_HEF34" # 'DE_HEF33', 'DE_HEF34', 'DE_HMF33', 'DE_HMF34', 'DE_GKO34'
+  #   yearly_electrical_energy_demand: 4000
+  #   yearly_thermal_energy_demand: 12000
+  #   thermal_peak_load: 6
+  #   heating: central_boiler
+  #   thermal_storage: false
+  #   quarter_grid: central_pv
+
+gas_heating:
+  marginal_cost: 0.123 #ct/kWh
+  efficiency: 0.9
+  p_min: 0 #anpassen wenn vpplib 0.15 # Mindestleistung wenn eingeschaltet in % der Nennleistung
+
+heat_pumps:
+  HP_Ground:
+    type: Ground 
+    cop: 4
+    cop_at_minus10: 3.5
+    temp: 55
+    p_min: 0.25 # Mindestleistung wenn eingeschaltet in % der Nennleistung
+  HP_Air:
+    type: Air
+    cop: 3
+    cop_at_minus10: 2.5
+    temp: 45
+    p_min: 0.35 # Mindestleistung wenn eingeschaltet in % der Nennleistung
+
+district_heating:
+  marginal_cost: 0.07 #ct/kWh
+  efficiency: 0.95
+  p_min: 0 #anpassen wenn vpplib 0.05 # Mindestleistung wenn eingeschaltet in % der Nennleistung
+
+local_heating:
+  marginal_cost: 0.07 #ct/kWh
+  efficiency: 0.95
+  p_min: 0 #anpassen wenn vpplib 0.05 # Mindestleistung wenn eingeschaltet in % der Nennleistung
+
+thermal_storage:
+  standing_loss_per_day: 0.0052   # in %     
+  c_water: 4.18                   # kJ/kg/K – optional, fix
+  t_room: 18                      # Temperatur des Raumes, in dem Pufferspeicher installiert ist 
+  HP_Air:
+    t_min: 30
+    t_max: 45
+  HP_Ground:
+    t_min: 35
+    t_max: 55
+
+pv_systems:
+  module_lib: "SandiaMod"
+  module: "Canadian_Solar_CS5P_220M___2009_"
+  inverter_lib: "cecinverter"
+  inverter: "Connect_Renewable_Energy__CE_4000__240V_"
+  surface_tilt: 35
+  surface_azimuth: 200
+  modules_per_string: 4
+  strings_per_inverter: 2
+  temp_lib: "sapm"
+  temp_model: "open_rack_glass_glass"
+
+battery: # Huawei LUNA2000-200kWh-2H1
+  initial_SoC: 0.5
+  charge_efficiency: 0.98
+  discharge_efficiency: 0.98
+  max_power: 100
+  capacity: 193.5 
+  standing_loss: 5.2e-5 # ~ 0.5% pro Tag
+  extendable: False  # not implemented yet
+  capital_cost: 1000 # €/kWh  # not implemented yet
