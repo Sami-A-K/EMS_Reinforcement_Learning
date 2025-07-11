@@ -175,8 +175,6 @@ class EnergySystemSimulation(gym.Env):
     def set_controllable_components(self, action, timestep):
         for i, component in enumerate(self.controllables):
             if component["type"] == "storage_unit":
-                soc = self.network.storage_units.at[component, "state_of_charge"]
-
                 p_set = action[i] * component["p_nom"]
                 self.network.storage_units_t.p_set.at[timestep, component["name"]] = p_set
 
