@@ -53,7 +53,7 @@ class EnergyDistrictNetwork:
         self.network.add('Carrier', name='gas')
 
         self.network.add('Bus', name='grid_demand_bus', carrier='AC')
-        self.network.add('Generator', name='grid power', bus='grid_demand_bus', carrier="AC", marginal_cost=0.28, p_nom = np.inf)
+        self.network.add('Generator', name='grid power', bus='grid_demand_bus', marginal_cost=0.28, p_nom = np.inf, carrier='AC')
 
         for actor in self.config["actors"]:
             self.add_actor(actor)
@@ -62,7 +62,7 @@ class EnergyDistrictNetwork:
         if actor.get("yearly_electrical_energy_demand"):
             self.network.add("Bus", name=f"{actor.get('name')}_electrical_bus", carrier="AC")
             self.network.add("Load", name=f"{actor.get('name')}_electrical_load", bus=f"{actor.get('name')}_electrical_bus", carrier="AC")
-            self.network.add("Link", name=f"{actor.get('name')}_electrical_demand_link", bus0='grid_demand_bus', bus1=f"{actor.get('name')}_electrical_bus", p_nom = np.inf, efficiency=1)
+            self.network.add("Link", name=f"{actor.get('name')}_electrical_demand_link", bus0='grid_demand_bus', bus1=f"{actor.get('name')}_electrical_bus", p_nom = np.inf, efficiency=1, carrier='AC')
         
         if actor.get("P_pv_nom"):
             self.add_pv_generator(actor,self.config["pv_systems"])
@@ -96,10 +96,10 @@ class EnergyDistrictNetwork:
             self.network.add("Bus", name=f"{actor.get('name')}_electrical_bus", carrier="AC")
         P_pv_nom = actor.get('P_pv_nom')
 
-        self.network.add("Bus", name=f"{actor.get('name')}_infeed_con", carrier="AC_infeed")
-        self.network.add('Generator', name=f"{actor.get('name')}_grid_feed_in", bus=f"{actor.get('name')}_infeed_con", sign=-1, marginal_cost=-0.08, p_nom = 1.5 * P_pv_nom, carrier="AC_infeed")
-        self.network.add('Generator', name=f"{actor.get('name')}_pv", bus=f"{actor.get('name')}_infeed_con", marginal_cost=0, p_nom = P_pv_nom, control='PQ', carrier="pv")
-        self.network.add('Link', name=f"{actor.get('name')}_pv_link", bus0=f"{actor.get('name')}_infeed_con", bus1=f"{actor.get('name')}_electrical_bus", p_nom=1.5 * P_pv_nom, efficiency=1)
+        self.network.add("Bus", name=f"{actor.get('name')}_infeed_con", carrier="AC")
+        self.network.add('Generator', name=f"{actor.get('name')}_grid_feed_in", bus=f"{actor.get('name')}_infeed_con", sign=-1, marginal_cost=-0.08, p_nom = 1.5 * P_pv_nom, carrier="AC")
+        self.network.add('Generator', name=f"{actor.get('name')}_pv", bus=f"{actor.get('name')}_infeed_con", marginal_cost=0, p_nom = P_pv_nom, control='PQ', carrier="AC")
+        self.network.add('Link', name=f"{actor.get('name')}_pv_link", bus0=f"{actor.get('name')}_infeed_con", bus1=f"{actor.get('name')}_electrical_bus", p_nom=1.5 * P_pv_nom, efficiency=1, carrier='AC')
 
     def add_battery_storage(self, actor, bat_config):
         """
@@ -119,7 +119,7 @@ class EnergyDistrictNetwork:
 
         This method configures an electricity line between an actor with electricity generation and an actor with electricity demand.
         """
-        self.network.add('Link', name=f"{actor_sink.get('name')}_local_grid", bus0=f"{actor_source.get('name')}_electrical_bus", bus1=f"{actor_sink.get('name')}_electrical_bus", p_nom=np.inf, efficiency=1)
+        self.network.add('Link', name=f"{actor_sink.get('name')}_local_grid", bus0=f"{actor_source.get('name')}_electrical_bus", bus1=f"{actor_sink.get('name')}_electrical_bus", p_nom=np.inf, efficiency=1, carrier='AC')
 
     def add_heat_pump(self, actor, hp_config):
         """
@@ -140,7 +140,7 @@ class EnergyDistrictNetwork:
             self.network.add("Bus", name="district_heating_bus", carrier="heat")
             self.network.add("Generator", name="district_heat_supply", bus="district_heating_bus", carrier="heat", marginal_cost=dh_config.get("marginal_cost"), p_nom = np.inf)
 
-        self.network.add("Link", name=f"{actor.get('name')}_district_heating_line", bus0="district_heating_bus", bus1=f"{actor.get('name')}_thermal_bus", p_nom=np.inf, efficiency=dh_config.get("efficiency"), p_min_pu=dh_config.get("p_min"))
+        self.network.add("Link", name=f"{actor.get('name')}_district_heating_line", bus0="district_heating_bus", bus1=f"{actor.get('name')}_thermal_bus", p_nom=np.inf, efficiency=dh_config.get("efficiency"), p_min_pu=dh_config.get("p_min"), carrier="heat")
     
     def add_gas_heating(self, actor, gas_config):
         """
@@ -152,7 +152,7 @@ class EnergyDistrictNetwork:
             self.network.add("Bus", name="natural_gas_bus", carrier="gas")
             self.network.add("Generator", name="gas_supply", bus="natural_gas_bus", carrier="gas", marginal_cost=gas_config.get("marginal_cost"), p_nom = np.inf)
 
-        self.network.add('Link', name=f"{actor.get('name')}_gas_boiler", bus0='natural_gas_bus', bus1=f"{actor.get('name')}_thermal_bus", p_nom=np.inf, efficiency=gas_config.get("efficiency"), p_min_pu=gas_config.get("p_min"))
+        self.network.add('Link', name=f"{actor.get('name')}_gas_boiler", bus0='natural_gas_bus', bus1=f"{actor.get('name')}_thermal_bus", p_nom=np.inf, efficiency=gas_config.get("efficiency"), p_min_pu=gas_config.get("p_min"), carrier="heat")
 
     def add_local_heating(self, actor_source, actor_sink, lh_config):
         """
@@ -162,7 +162,7 @@ class EnergyDistrictNetwork:
         """
         if f"{actor_source.get('name')}_thermal_bus" not in self.network.buses.index:
             self.add_actor(actor_source)
-        self.network.add('Link', name=f"{actor_sink.get('name')}_local_heat", bus0=f"{actor_source.get('name')}_thermal_bus", bus1=f"{actor_sink.get('name')}_thermal_bus", p_nom=np.inf, efficiency=lh_config.get("efficiency"), p_min_pu=lh_config.get("p_min"))
+        self.network.add('Link', name=f"{actor_sink.get('name')}_local_heat", bus0=f"{actor_source.get('name')}_thermal_bus", bus1=f"{actor_sink.get('name')}_thermal_bus", p_nom=np.inf, efficiency=lh_config.get("efficiency"), p_min_pu=lh_config.get("p_min"), carrier="heat")
 
     def add_thermal_storage(self, actor, ths_config):
         """
@@ -182,7 +182,7 @@ class EnergyDistrictNetwork:
         
         e_min_pu = (t_min - t_room) / (t_max - t_room)
         
-        self.network.add("Store", name=f"{actor.get('name')}_thermal_storage", bus=f"{actor.get('name')}_thermal_bus", e_nom=e_nom, e_cyclic=True, standing_loss=standing_loss, e_min_pu=e_min_pu)
+        self.network.add("Store", name=f"{actor.get('name')}_thermal_storage", bus=f"{actor.get('name')}_thermal_bus", e_nom=e_nom, standing_loss=standing_loss, e_min_pu=e_min_pu, carrier="heat")
 
     # def add_thermal_storage(self, actor, ths_config):
     #     """
