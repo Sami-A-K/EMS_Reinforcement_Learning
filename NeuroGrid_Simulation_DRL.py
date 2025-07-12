@@ -80,8 +80,8 @@ class EnergySystemSimulation(gym.Env):
         # Netzwerk für den Zeitschritt und vom Agenten gewählten aktionen optimieren
         self.network.optimize(solver_name="gurobi")#, extra_solver_options={"logLevel": 0})
         # SOCs abspeichern
-        thermal_storage_soc = self.network.stores_t.e 
-        battery_soc = self.network.storage_units_t.state_of_charge
+        thermal_storage_soc = self.network.stores_t.e.loc[self.timestep]
+        battery_soc = self.network.storage_units_t.state_of_charge.loc[self.timestep]
 
         # Berechnung Reward 
         gen_p_agent = self.network.generators_t.p.loc[self.timestep] 
@@ -209,14 +209,14 @@ class EnergySystemSimulation(gym.Env):
             if f"hp_cop_{actor.get('name')}" in self.heat_pump_cops.columns:
                 self.network.links_t['efficiency'][f"{actor.get('name')}_heatpump"] = self.heat_pump_cops.loc[timerange, f"hp_cop_{actor.get('name')}"]
 
-    def set_pypsa_storages(self,bat_soc, th_soc):
-        for bat_name, soc in bat_soc.items():
-            if bat_name in self.network.storage_units.index:
-                self.network.storage_units.at[bat_name, 'state_of_charge_initial'] = soc
-        
-        for th_store_name, soc in th_soc.items():
-            if th_store_name in self.network.stores.index:
-                self.network.stores.at[th_store_name, 'e_initial'] = soc
+    def set_pypsa_storages(self, bat_soc: pd.Series, th_soc: pd.Series):
+        for name, soc in bat_soc.items():
+            if name in self.network.storage_units.index:
+                self.network.storage_units.at[name, 'state_of_charge_initial'] = soc
+
+        for name, soc in th_soc.items():
+            if name in self.network.stores.index:
+                self.network.stores.at[name, 'e_initial'] = soc
 
     # def reset_pypsa_network(self):
     #     for actor in self.config["actors"]:
