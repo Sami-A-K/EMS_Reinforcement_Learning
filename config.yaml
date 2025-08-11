@@ -1,10 +1,9 @@
 general:
   optimizer: "cost" # "cost" or "co2" (or "peakshaving")
   start: "2015-01-01 00:00:00"
-  end: "2015-12-31 23:45:00" # 23:45:00
-  year: "2015"
+  end: "2015-12-31 23:45:00"
   timebase: 15
-  time_freq: "15 min"
+  time_freq: "15min"
   latitude: 50.941357
   longitude: 6.958307
   name: "VPP"
@@ -25,7 +24,7 @@ actors:
   #   #thermal_storage: true
 
 - name: central_pv
-  P_pv_nom: 15
+ #P_pv_nom: 15
   E_bat_nom: 10
   P_bat_nom: 7
 
@@ -36,7 +35,7 @@ actors:
   yearly_thermal_energy_demand: 9000
   heating: HP_Ground
   P_hp_nom: 3.5
-  E_th_nom: 6
+  E_th_nom: 6 
   quarter_grid: central_pv
 
 - name: house_2
@@ -47,7 +46,6 @@ actors:
   heating: HP_Air
   P_hp_nom: 6
   E_th_nom: 8
-  thermal_storage: true
   quarter_grid: central_pv
 
 - name: house_3
@@ -58,7 +56,6 @@ actors:
   heating: HP_Air
   P_hp_nom: 5
   E_th_nom: 7
-  thermal_storage: true
   quarter_grid: central_pv
 
 
