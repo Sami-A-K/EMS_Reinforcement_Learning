@@ -45,7 +45,7 @@ if __name__ == "__main__":
     )
 
     model.learn(total_timesteps=10, callback=eval_callback)
-    model.save("/work/bpicard3s/test/run1/")
+    model.save("/work/bpicar3s/test/run1/ppo_training")
 
     # Normalisierungs-Statistiken sichern
     env.save("./models/vecnormalize.pkl")
