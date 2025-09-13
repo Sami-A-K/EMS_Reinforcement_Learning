@@ -14,49 +14,51 @@ general:
   mean_temp_days: "./input/thermal/dwd_temp_days_2015.csv"
   mean_temp_hours: "./input/thermal/dwd_temp_hours_2015.csv"
   mean_temp_15min: "./input/thermal/dwd_temp_15min_2015.csv"
+  signal_values: "./input/market_data.csv"
 
   t_0: 40
-
+  
 actors:
-  # - name: central_boiler
-  #   thermal_peak_load: 10
-  #   heating: gas
-  #   #thermal_storage: true
-
-- name: central_pv
- #P_pv_nom: 15
-  E_bat_nom: 10
-  P_bat_nom: 7
+# - name: central_pv
+#   P_pv_nom: 15
+#   E_bat_nom: 10
+#   P_bat_nom: 7
 
 - name: house_1
   SLP_type: H00
   building_type: "DE_HEF34"       # Einfamilienhaus, Neubau gut gedämmt
   yearly_electrical_energy_demand: 4500
+  P_pv_nom: 4
+  E_bat_nom: 5
+  P_bat_nom: 5
   yearly_thermal_energy_demand: 9000
   heating: HP_Ground
   P_hp_nom: 3.5
   E_th_nom: 6 
-  quarter_grid: central_pv
 
-- name: house_2
-  SLP_type: H00
-  building_type: "DE_HMF33"
-  yearly_electrical_energy_demand: 10000
-  yearly_thermal_energy_demand: 15000
-  heating: HP_Air
-  P_hp_nom: 6
-  E_th_nom: 8
-  quarter_grid: central_pv
 
-- name: house_3
-  SLP_type: H00
-  building_type: "DE_HEF33"       # Gewerbekomplex mit Wohnanteil, Neubau
-  yearly_electrical_energy_demand: 5000
-  yearly_thermal_energy_demand: 12000
-  heating: HP_Air
-  P_hp_nom: 5
-  E_th_nom: 7
-  quarter_grid: central_pv
+# - name: house_2
+#   SLP_type: H00
+#   building_type: "DE_HMF33"
+#   yearly_electrical_energy_demand: 10000
+#   P_pv_nom: 10
+#   E_bat_nom: 8
+#   P_bat_nom: 8
+#   yearly_thermal_energy_demand: 15000
+#   heating: HP_Air
+#   P_hp_nom: 6
+#   E_th_nom: 8
+
+
+# - name: house_3
+#   SLP_type: H00
+#   building_type: "DE_HEF33"       # Gewerbekomplex mit Wohnanteil, Neubau
+#   yearly_electrical_energy_demand: 5000
+#   yearly_thermal_energy_demand: 12000
+#   heating: HP_Air
+#   P_hp_nom: 5
+#   E_th_nom: 7
+#   quarter_grid: central_pv
 
 
   # - name: house_4

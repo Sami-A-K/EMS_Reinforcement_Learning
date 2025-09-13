@@ -44,6 +44,15 @@ class EnergyDistrictData:
 
         self.baseload = pd.read_csv(general_config.get("slp_data_file"), usecols=range(1, 12))  #Spalte mit Zeit nicht in Dataframe
         self.temperature = pd.read_csv(general_config.get("mean_temp_15min"), parse_dates=["time"], index_col="time")
+        
+        pd_signal_values = pd.read_csv(general_config.get("signal_values"),parse_dates=["time"],index_col="time")
+        if general_config.get("optimizer") == "cost":
+            self.signal_values = pd_signal_values[["price_el"]].rename(columns={"price_el": "signal_value"})
+        elif general_config.get("optimizer") == "co2":
+            self.signal_values = pd_signal_values[["co2_el"]].rename(columns={"co2_el": "signal_value"})
+        else:
+            raise ValueError("Unknown optimizer type: must be 'cost' or 'co2'")
+
         self.electrical_demand = pd.DataFrame()
         self.thermal_demand = pd.DataFrame()
         self.pv_generation = pd.DataFrame()
@@ -80,7 +89,6 @@ class EnergyDistrictData:
         This method calculates the thermal demand based on the user profile and
         environmental data obtained from the VPP Lib environment.
         """ 
-        # Reload Userprofile without faulty HP paramaters
         user_profile = UserProfile(
             identifier= actor.get('name'),
             latitude= general_config.get("latitude"),

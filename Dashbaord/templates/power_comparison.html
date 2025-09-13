@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent vs Baseline Power Vergleich</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .content {
+            padding: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 1.1em;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-value.positive {
+            color: #28a745;
+        }
+        .stat-value.negative {
+            color: #dc3545;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chart-container h3 {
+            margin: 0 0 20px 0;
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 10px;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        canvas {
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Agent vs Baseline Vergleich</h1>
+            <p>Power-Daten und Kosten-Analyse des trainierten Agents</p>
+            <div id="dateInfo" style="margin-top: 10px; font-size: 1.2em; opacity: 0.9;">
+                <span id="currentDate">Lade Datum...</span>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="controls">
+                <button class="btn" onclick="loadPowerData()">Daten laden</button>
+                <button class="btn" onclick="refreshData()">Aktualisieren</button>
+            </div>
+            
+            <div id="error" class="error"></div>
+            
+            <div id="loading" class="loading">
+                <p>Lade Power-Daten...</p>
+            </div>
+            
+            <div id="content" style="display: none;">
+                <!-- Statistiken -->
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Power-Vergleich (kW)</h3>
+                        <canvas id="powerChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Kosten-Vergleich (€)</h3>
+                        <canvas id="costsChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Power-Differenz (Agent - Baseline)</h3>
+                        <canvas id="diffChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Kumulative Einsparungen</h3>
+                        <canvas id="savingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let powerChart, costsChart, diffChart, savingChart;
+        let powerData = null;
+
+        // Beim Laden der Seite Daten laden
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPowerData();
+        });
+
+        // Power-Daten laden
+        function loadPowerData() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('content').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            
+            fetch('/api/power_comparison')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        powerData = data.data;
+                        displayPowerData();
+                    } else {
+                        showError(data.message);
+                    }
+                })
+                .catch(error => {
+                    showError('Fehler beim Laden der Power-Daten: ' + error.message);
+                })
+                .finally(() => {
+                    document.getElementById('loading').style.display = 'none';
+                });
+        }
+
+        // Daten anzeigen
+        function displayPowerData() {
+            if (!powerData) return;
+
+            // Datum anzeigen
+            displayDate();
+            
+            // Statistiken anzeigen
+            displayStats();
+            
+            // Charts erstellen
+            createCharts();
+            
+            document.getElementById('content').style.display = 'block';
+        }
+
+        // Datum anzeigen
+        function displayDate() {
+            const data = powerData;
+            if (data.timestamps && data.timestamps.length > 0) {
+                const startDate = new Date(data.timestamps[0]);
+                const endDate = new Date(data.timestamps[data.timestamps.length - 1]);
+                
+                const startDateStr = startDate.toLocaleDateString('de-DE', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                const startTimeStr = startDate.toLocaleTimeString('de-DE', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                const endTimeStr = endDate.toLocaleTimeString('de-DE', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                let dateText;
+                if (startDate.toDateString() === endDate.toDateString()) {
+                    // Gleicher Tag
+                    dateText = `${startDateStr} von ${startTimeStr} bis ${endTimeStr}`;
+                } else {
+                    // Verschiedene Tage
+                    const endDateStr = endDate.toLocaleDateString('de-DE', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    dateText = `${startDateStr} ${startTimeStr} bis ${endDateStr} ${endTimeStr}`;
+                }
+                
+                document.getElementById('currentDate').textContent = dateText;
+            }
+        }
+
+        // Statistiken anzeigen
+        function displayStats() {
+            const statsGrid = document.getElementById('statsGrid');
+            const data = powerData;
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <h3>Agent Gesamtkosten</h3>
+                    <div class="stat-value">${data.total_agent_cost.toFixed(3)} €</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Baseline Gesamtkosten</h3>
+                    <div class="stat-value">${data.total_baseline_cost.toFixed(3)} €</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Gesamteinsparung</h3>
+                    <div class="stat-value ${data.total_saving >= 0 ? 'positive' : 'negative'}">${data.total_saving.toFixed(3)} €</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Einsparung in %</h3>
+                    <div class="stat-value ${data.saving_percentage >= 0 ? 'positive' : 'negative'}">${data.saving_percentage.toFixed(2)} %</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Anzahl Schritte</h3>
+                    <div class="stat-value">${data.timestamps.length}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Zeitraum</h3>
+                    <div class="stat-value" style="font-size: 1.2em;">${data.timestamps.length * 15} min</div>
+                </div>
+            `;
+        }
+
+        // Charts erstellen
+        function createCharts() {
+            const data = powerData;
+            const timeLabels = data.timestamps.map(t => t.substring(11, 16)); // Nur Uhrzeit
+            
+            // Power-Vergleich Chart
+            if (powerChart) powerChart.destroy();
+            const powerCtx = document.getElementById('powerChart').getContext('2d');
+            powerChart = new Chart(powerCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: data.actor_names.map((actor, index) => ({
+                        label: `Agent ${actor}`,
+                        data: data.agent_power[actor],
+                        borderColor: `hsl(${index * 120}, 70%, 50%)`,
+                        backgroundColor: `hsla(${index * 120}, 70%, 50%, 0.1)`,
+                        tension: 0.4
+                    })).concat(data.actor_names.map((actor, index) => ({
+                        label: `Baseline ${actor}`,
+                        data: data.baseline_power[actor],
+                        borderColor: `hsl(${index * 120}, 70%, 50%)`,
+                        borderDash: [5, 5],
+                        backgroundColor: 'transparent',
+                        tension: 0.4
+                    })))
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Leistung (kW)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Zeit'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Kosten-Vergleich Chart
+            if (costsChart) costsChart.destroy();
+            const costsCtx = document.getElementById('costsChart').getContext('2d');
+            costsChart = new Chart(costsCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Agent Kosten',
+                        data: data.agent_cost,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Baseline Kosten',
+                        data: data.baseline_cost,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Kosten (€)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Zeit'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Power-Differenz Chart
+            if (diffChart) diffChart.destroy();
+            const diffCtx = document.getElementById('diffChart').getContext('2d');
+            diffChart = new Chart(diffCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: data.actor_names.map((actor, index) => ({
+                        label: `Power-Diff ${actor}`,
+                        data: data.power_diff[actor],
+                        borderColor: `hsl(${index * 120}, 70%, 50%)`,
+                        backgroundColor: `hsla(${index * 120}, 70%, 50%, 0.1)`,
+                        tension: 0.4
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Power-Differenz (kW)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Zeit'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Kumulative Einsparungen Chart
+            if (savingChart) savingChart.destroy();
+            const savingCtx = document.getElementById('savingChart').getContext('2d');
+            savingChart = new Chart(savingCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Kumulative Einsparung',
+                        data: data.cumulative_saving,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Agent kumulative Kosten',
+                        data: data.cumulative_agent_cost,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Baseline kumulative Kosten',
+                        data: data.cumulative_baseline_cost,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Kosten (€)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Zeit'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Daten aktualisieren
+        function refreshData() {
+            loadPowerData();
+        }
+
+        // Fehler anzeigen
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
