@@ -15,75 +15,33 @@ general:
   mean_temp_hours: "./input/thermal/dwd_temp_hours_2015.csv"
   mean_temp_15min: "./input/thermal/dwd_temp_15min_2015.csv"
   signal_values: "./input/market_data.csv"
-
   t_0: 40
   
 actors:
-# - name: central_pv
-#   P_pv_nom: 15
-#   E_bat_nom: 10
-#   P_bat_nom: 7
-
-- name: house_1
+- name: residential_building
   SLP_type: H00
-  building_type: "DE_HEF34"       # Einfamilienhaus, Neubau gut gedämmt
-  yearly_electrical_energy_demand: 4500
-  P_pv_nom: 4
-  E_bat_nom: 5
-  P_bat_nom: 5
-  yearly_thermal_energy_demand: 9000
+  building_type: "DE_HMF34"
+  yearly_electrical_energy_demand: 80000      # kWh/a inkl. HP-Strom
+  yearly_thermal_energy_demand: 114000        # kWh_th/a
+  P_pv_nom: 30                                # kWp
+  E_bat_nom: 30                               # kWh
+  P_bat_nom: 20                               # kW
   heating: HP_Ground
-  P_hp_nom: 3.5
-  E_th_nom: 6 
+  P_hp_nom_el: 19                             # kW_el @ JAZ~3.5
+  E_th_nom: 46                                # kWh_th (~2.0 m³ @ ΔT 20 K)
 
+- name: commercial_building
+  SLP_type: G00
+  building_type: "DE_GKO34"
+  yearly_electrical_energy_demand: 50000
+  yearly_thermal_energy_demand: 80000
+  P_pv_nom: 20
+  E_bat_nom: 20
+  P_bat_nom: 20
+  heating: HP_Air
+  P_hp_nom: 14                                  # kW_el @ JAZ~3.5
+  E_th_nom: 23                                  # kWh_th (~1.0 m³ @ ΔT 20 K)
 
-# - name: house_2
-#   SLP_type: H00
-#   building_type: "DE_HMF33"
-#   yearly_electrical_energy_demand: 10000
-#   P_pv_nom: 10
-#   E_bat_nom: 8
-#   P_bat_nom: 8
-#   yearly_thermal_energy_demand: 15000
-#   heating: HP_Air
-#   P_hp_nom: 6
-#   E_th_nom: 8
-
-
-# - name: house_3
-#   SLP_type: H00
-#   building_type: "DE_HEF33"       # Gewerbekomplex mit Wohnanteil, Neubau
-#   yearly_electrical_energy_demand: 5000
-#   yearly_thermal_energy_demand: 12000
-#   heating: HP_Air
-#   P_hp_nom: 5
-#   E_th_nom: 7
-#   quarter_grid: central_pv
-
-
-  # - name: house_4
-  #   SLP_type: H00
-  #   building_type: "DE_HEF34" # 'DE_HEF33', 'DE_HEF34', 'DE_HMF33', 'DE_HMF34', 'DE_GKO34'
-  #   yearly_electrical_energy_demand: 4000
-  #   yearly_thermal_energy_demand: 12000
-  #   thermal_peak_load: 6
-  #   heating: central_boiler
-  #   thermal_storage: false
-
-  # - name: house_5
-  #   SLP_type: H00
-  #   building_type: "DE_HEF34" # 'DE_HEF33', 'DE_HEF34', 'DE_HMF33', 'DE_HMF34', 'DE_GKO34'
-  #   yearly_electrical_energy_demand: 4000
-  #   yearly_thermal_energy_demand: 12000
-  #   thermal_peak_load: 6
-  #   heating: central_boiler
-  #   thermal_storage: false
-  #   quarter_grid: central_pv
-
-gas_heating:
-  marginal_cost: 0.123 #ct/kWh
-  efficiency: 0.9
-  p_min: 0 #anpassen wenn vpplib 0.15 # Mindestleistung wenn eingeschaltet in % der Nennleistung
 
 heat_pumps:
   HP_Ground:
@@ -98,16 +56,6 @@ heat_pumps:
     cop_at_minus10: 2.5
     temp: 45
     p_min: 0.35 # Mindestleistung wenn eingeschaltet in % der Nennleistung
-
-district_heating:
-  marginal_cost: 0.07 #ct/kWh
-  efficiency: 0.95
-  p_min: 0 #anpassen wenn vpplib 0.05 # Mindestleistung wenn eingeschaltet in % der Nennleistung
-
-local_heating:
-  marginal_cost: 0.07 #ct/kWh
-  efficiency: 0.95
-  p_min: 0 #anpassen wenn vpplib 0.05 # Mindestleistung wenn eingeschaltet in % der Nennleistung
 
 thermal_storage:
   standing_loss_per_day: 0.0052   # in %     

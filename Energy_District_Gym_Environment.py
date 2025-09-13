@@ -169,12 +169,14 @@ class EnergyDistrictEnvironment(gym.Env):
         # Linear Power Flow Berechnung durch PyPSA. Wie viel Leistung wird aus dem Stromnetz benötigt. 
         self.network.lpf(self.timestep)
 
+        soc_sum = 0.0
         # SOC Update 
         for storage in self.network.storage_units.index:
             soc_init = self.network.storage_units_t.state_of_charge_set.loc[self.timestep - pd.Timedelta(minutes=self.min_per_interval), storage]
             p_storage = self.network.storage_units_t.p_set.loc[self.timestep, storage]
             soc_timestep = soc_init - p_storage * self.dt 
             self.network.storage_units_t.state_of_charge_set.loc[self.timestep, storage] = soc_timestep
+            soc_sum += soc_init
             
         # Reward-Berechnung
         agent_value = 0.0
@@ -192,7 +194,7 @@ class EnergyDistrictEnvironment(gym.Env):
             else:
                 baseline_value += baseline_power * -0.08 * self.dt
 
-        reward = (agent_value - baseline_value) - clip_penalty * 0.01
+        reward = (agent_value - baseline_value) - clip_penalty * 0.1
 
         if np.isnan(reward):
             raise ValueError("Reward is NaN, aborting training")
@@ -211,7 +213,7 @@ class EnergyDistrictEnvironment(gym.Env):
 
         if self.num_steps > self.num_steps_max:
             truncated = True
-            reward += soc_timestep * 0.28 
+            reward += soc_timestep * 0.1 
 
         return obs, reward, terminated, truncated, info
 

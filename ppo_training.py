@@ -44,7 +44,7 @@ if __name__ == "__main__":
         render=False,
     )
 
-    model.learn(total_timesteps=10, callback=eval_callback)
+    model.learn(total_timesteps=2000000, callback=eval_callback)
     model.save("/work/bpicar3s/test/run1/ppo_training")
 
     # Normalisierungs-Statistiken sichern
