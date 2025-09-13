@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     eval_env = SubprocVecEnv([make_env(999)])
     eval_env = VecNormalize(eval_env, norm_obs=True, norm_reward=True, clip_obs=10.0, clip_reward=10.0)
-    # wichtig: eval_env nicht updaten lassen, sondern nur normalize
+
     eval_env.training = False
     eval_env.norm_reward = False
 
@@ -44,8 +44,8 @@ if __name__ == "__main__":
         render=False,
     )
 
-    model.learn(total_timesteps=200000, callback=eval_callback)
-    model.save("./models/ppo_energy_district")
+    model.learn(total_timesteps=10, callback=eval_callback)
+    model.save("/work/bpicard3s/test/run1/")
 
     # Normalisierungs-Statistiken sichern
     env.save("./models/vecnormalize.pkl")
