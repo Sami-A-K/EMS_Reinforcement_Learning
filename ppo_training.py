@@ -14,7 +14,7 @@ def make_env(rank: int = 0):
 
 
 if __name__ == "__main__":
-    N_ENVS = 12  # parallele Environments
+    N_ENVS = 128  # parallele Environments
     env = SubprocVecEnv([make_env(i) for i in range(N_ENVS)])
     env = VecNormalize(env, norm_obs=True, norm_reward=True, clip_obs=10.0, clip_reward=10.0)
 
@@ -28,9 +28,10 @@ if __name__ == "__main__":
         "MlpPolicy",
         env,
         device="auto",
-        n_steps=96,
-        batch_size=int(N_ENVS * 96 / 4),
-        learning_rate=2e-4,
+        n_steps=1024,
+        batch_size=8192,
+        policy_kwargs = dict(net_arch=[512, 512, 256]),
+        learning_rate=3e-4,
         verbose=1,
         tensorboard_log="./logs/tb/"
     )
@@ -44,8 +45,8 @@ if __name__ == "__main__":
         render=False,
     )
 
-    model.learn(total_timesteps=2000000, callback=eval_callback)
-    model.save("/work/bpicar3s/test/run1/ppo_training")
+    model.learn(total_timesteps=1300000, callback=eval_callback)
+    model.save("/work/bpicar3s/test/run1/ppo_training_2")
 
     # Normalisierungs-Statistiken sichern
     env.save("./models/vecnormalize.pkl")
