@@ -27,7 +27,7 @@ actors:
   E_bat_nom: 30                               # kWh
   P_bat_nom: 20                               # kW
   heating: HP_Ground
-  P_hp_nom_el: 19                             # kW_el @ JAZ~3.5
+  P_hp_nom: 19                             # kW_el @ JAZ~3.5
   E_th_nom: 46                                # kWh_th (~2.0 m³ @ ΔT 20 K)
 
 - name: commercial_building
